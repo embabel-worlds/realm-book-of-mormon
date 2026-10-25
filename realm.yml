@@ -1,0 +1,29 @@
+name: realm-book-of-mormon
+description: |
+  The Book of Mormon as a graph you can query: every verse of its fifteen books, 1 Nephi to
+  Moroni, with the headings printed in the text since 1830. Read a verse or a chapter, search
+  it, see what each book holds, and find where it quotes the Bible — twenty-one chapters of
+  Isaiah, the Sermon on the Mount, Malachi — verse by verse.
+
+  With realm-bible installed, each quoting verse is joined to the King James verse it quotes by
+  CORRESPONDS_TO, so a quoted chapter reads beside its source and the differences show.
+
+  A child of the scripture vocabulary: a BomVerse is a Verse, so a question asked of every
+  scripture is answered here too. Keyless. Nothing to configure. Text public domain, from
+  bcbooks/scriptures-json; no copyrighted chapter summaries or footnotes.
+version: 0.1.0
+# Experimental: its types are children of realm-scripture-vocabulary, which is itself experimental.
+maturity: experimental
+url: https://github.com/embabel-worlds/realm-book-of-mormon
+author: Rod Johnson
+realmLabel: BookOfMormon
+tags:
+  - book-of-mormon
+  - scripture
+  - latter-day-saint
+  - reference
+exports:
+  - BomScripture
+  - BomBook
+  - BomChapter
+  - BomVerse

@@ -1,0 +1,92 @@
+# The realm's answer surface.
+#
+# References are as a reader writes them — `1 Nephi 3:7`, matched against `name`. Views that cross
+# scriptures are not here: they read only the vocabulary's parent labels, so they live in
+# realm-scripture-vocabulary and answer from whatever is installed. The two that read the King James
+# beside the Book of Mormon are here, because only this realm knows which verse quotes which.
+
+- name: ReadBomVerse
+  description: One verse of the Book of Mormon by reference, with the King James verse it quotes or alludes to, if any.
+  params:
+    ref:
+      type: string
+      default: "1 Nephi 3:7"
+      description: "The verse, e.g. `1 Nephi 3:7`, `Moroni 10:4`."
+  cypher: |
+    MATCH (v:BomVerse {name: $ref})
+    RETURN v.name AS reference, v.text AS text, v.kjvRefs AS quotes, v.kjvAllusions AS alludesTo
+
+- name: ReadBomChapter
+  description: A whole chapter of the Book of Mormon, verse by verse, with its printed heading and the King James chapters it quotes.
+  params:
+    chapter:
+      type: string
+      default: "1 Nephi 1"
+      description: "The chapter, e.g. `1 Nephi 1`, `Alma 32`, `3 Nephi 11`."
+  cypher: |
+    MATCH (c:BomChapter {name: $chapter})<-[:IN]-(v:BomVerse)
+    RETURN c.heading AS heading, c.quotes AS quotesChapters, v.verse AS verse, v.text AS text, v.kjvRefs AS quotes
+    ORDER BY verse
+
+- name: BomBooks
+  description: The fifteen books in order, with their full titles, how many chapters and verses each holds, and the heading printed at each book's head.
+  cypher: |
+    MATCH (b:BomBook)
+    RETURN b.bookOrder AS order, b.name AS book, b.fullTitle AS fullTitle,
+           b.chapterCount AS chapters, b.verseCount AS verses, b.heading AS heading
+    ORDER BY order
+
+- name: SearchBookOfMormon
+  description: Book of Mormon verses whose text contains a word or phrase, case-insensitively, in reading order. Matches inside words — `faith` also finds `faithful`.
+  params:
+    term:
+      type: string
+      default: "faith"
+      description: "The word or phrase to find."
+    limit:
+      type: int
+      default: 100
+      description: "How many verses to return."
+  cypher: |
+    MATCH (v:BomVerse)
+    WHERE toLower(v.text) CONTAINS toLower($term)
+    RETURN v.name AS reference, v.text AS text
+    ORDER BY v.ordinal
+    LIMIT $limit
+
+- name: BooksMentioning
+  description: How often each book of the Book of Mormon uses a word, ranked — verses containing it, and the rate per thousand verses so a short book and Alma compare fairly.
+  params:
+    term:
+      type: string
+      default: "repent"
+      description: "The word or phrase to count."
+  cypher: |
+    MATCH (b:BomBook)<-[:IN]-(:BomChapter)<-[:IN]-(v:BomVerse)
+    WITH b, count(v) AS total, sum(CASE WHEN toLower(v.text) CONTAINS toLower($term) THEN 1 ELSE 0 END) AS hits
+    WHERE hits > 0
+    RETURN b.name AS book, hits AS verses, total AS ofVerses, round(1000.0 * hits / total, 1) AS perThousand
+    ORDER BY perThousand DESC
+
+- name: QuotedChapters
+  description: Every chapter that quotes the King James, with the chapters it quotes and how many of its verses do — Isaiah in 1 and 2 Nephi and Mosiah, the Sermon on the Mount in 3 Nephi, Malachi.
+  cypher: |
+    MATCH (c:BomChapter)<-[:IN]-(v:BomVerse)
+    WHERE c.quotes IS NOT NULL
+    WITH c, count(v) AS verses, sum(CASE WHEN v.kjvRefs IS NULL THEN 0 ELSE 1 END) AS quoting
+    MATCH (c)<-[:IN]-(first:BomVerse {verse: 1})
+    RETURN c.name AS chapter, c.quotes AS quotes, quoting, verses
+    ORDER BY first.ordinal
+
+- name: BomBesideKingJames
+  description: A quoting chapter verse by verse beside the King James verse each one quotes, through CORRESPONDS_TO — where the Book of Mormon adds to or departs from its source, the two texts show it. Needs realm-bible.
+  params:
+    chapter:
+      type: string
+      default: "2 Nephi 12"
+      description: "A chapter that quotes the Bible, e.g. `2 Nephi 12` (Isaiah 2), `3 Nephi 13` (Matthew 6). QuotedChapters lists them."
+  cypher: |
+    MATCH (c:BomChapter {name: $chapter})<-[:IN]-(m:BomVerse)
+    OPTIONAL MATCH (m)-[r:CORRESPONDS_TO]->(k:BibleVerse)
+    RETURN m.verse AS verse, m.text AS bookOfMormon, k.name AS kingJames, k.text AS kjv, r.kind AS kind
+    ORDER BY verse

@@ -1,0 +1,89 @@
+# The Book of Mormon as a graph: four STORED types, children of the scripture vocabulary.
+#
+#   BomScripture ◀─IN─ BomBook ◀─IN─ BomChapter ◀─IN─ BomVerse
+#   (HolyBook)         (ScriptureBook) (ScriptureChapter) (Verse)
+#
+# Seeded from reference/, which scripts/build_reference.py builds; it never changes. No reading
+# portion: the tradition reads it on no fixed cycle.
+#
+# ONE TEXT. The Book of Mormon was received in English, so `text` is the scripture and `original` is
+# empty, as the vocabulary says it is for a scripture whose own language is English. `translation`
+# names the edition — the 2013 text, public domain — not a rendering out of another language.
+#
+# REFERENCES NEED NO QUALIFIER. No book of the Book of Mormon shares a name with a book of the Bible,
+# so `name` is the reference as a reader writes it, `1 Nephi 3:7`.
+#
+# QUOTATION. Where a verse quotes the King James — Isaiah, the Sermon on the Mount, Malachi — `kjvRefs`
+# names the verse it quotes, and `kjvAllusions` one it only alludes to; rules/corresponds.yml draws
+# CORRESPONDS_TO from both when realm-bible is installed. Both are FOUND by the build, by word
+# likeness within the chapters a quoting chapter draws on, not written by hand.
+#
+# The types are prefixed `Bom`: the realm's provenance label is `BookOfMormon`, which no type may
+# share, and one of its books is itself called Mormon, so `MormonBook` would read as that book.
+
+- name: BomScripture
+  parents: [HolyBook]
+  userAnchor: false
+  description: "The Book of Mormon as one holy book — a single node, `scripture: 'book-of-mormon'`. Its fifteen books are IN it."
+  properties:
+    scripture:
+      identity: true
+      description: "Always `book-of-mormon`. Identity."
+    textSource: "Where the text comes from: bcbooks/scriptures-json, public domain, without the copyrighted chapter summaries and footnotes."
+
+- name: BomBook
+  parents: [ScriptureBook]
+  userAnchor: false
+  description: "One of the fifteen books, 1 Nephi to Moroni, with its full title and the heading printed in the text since 1830. IN the BomScripture; its chapters are IN it."
+  properties:
+    slug:
+      identity: true
+      description: "The book's name as a slug, e.g. `1-nephi`, `words-of-mormon`. Identity."
+    fullTitle: "The book's title as printed, e.g. `The First Book of Nephi`."
+    heading: "The heading printed at the book's head — part of the text, not an editor's summary. Absent where the book has none."
+    chapterCount:
+      type: int
+      description: "Chapters in the book."
+    verseCount:
+      type: int
+      description: "Verses in the book."
+
+- name: BomChapter
+  parents: [ScriptureChapter]
+  userAnchor: false
+  description: "A chapter of the Book of Mormon, e.g. `2 Nephi 12`. `quotes` lists the King James chapters its verses quote, where any do. IN its book; its verses are IN it."
+  properties:
+    ref:
+      identity: true
+      description: "`<book slug>.<chapter>`, e.g. `2-nephi.12`. Identity."
+    book: "The book's name, e.g. `2 Nephi`."
+    heading: "The heading printed at the chapter's head, on the fifteen chapters that have one (Mosiah 9, Alma 5, …) — part of the text since 1830."
+    quotes:
+      cardinality: LIST
+      description: "The King James chapters this chapter's verses quote, e.g. `[Isaiah 2]` for 2 Nephi 12. Absent on a chapter that quotes none."
+
+- name: BomVerse
+  parents: [Verse]
+  userAnchor: false
+  description: >-
+    One verse of the Book of Mormon. `text` is the scripture, in English as it was received; `original`
+    is empty. `name` is the reference, e.g. `1 Nephi 3:7`. Search with toLower(v.text) CONTAINS 'faith'.
+    `kjvRefs` names the King James verse the verse quotes (580 do: Isaiah, Matthew 5–7, Malachi 3–4);
+    `kjvAllusions` one it only alludes to. IN its BomChapter.
+  properties:
+    ref:
+      identity: true
+      description: "`<book slug>.<chapter>.<verse>`, e.g. `1-nephi.3.7`. Identity."
+    book: "The book's name, e.g. `1 Nephi`."
+    kjvRefs:
+      cardinality: LIST
+      description: "The King James verse this verse quotes, e.g. `[Isaiah 2:1]` for 2 Nephi 12:1. Absent where it quotes none."
+    kjvAllusions:
+      cardinality: LIST
+      description: "A King James verse this verse alludes to without quoting, found by shared words — a candidate, e.g. `[1 Corinthians 13:4]` for Moroni 7:45."
+    kjvOsis:
+      cardinality: LIST
+      description: "`kjvRefs` as OSIS references, e.g. `[Isa.2.1]` — realm-bible's BibleVerse identity, which CORRESPONDS_TO joins on because it is indexed and `name` is not."
+    kjvAllusionOsis:
+      cardinality: LIST
+      description: "`kjvAllusions` as OSIS references, e.g. `[1Cor.13.4]`."

@@ -1,0 +1,35 @@
+# DERIVE rule set: each Book of Mormon verse and the King James verse it quotes or alludes to.
+#
+# The vocabulary's CORRESPONDS_TO, declared by the realm that knows both texts. The pairing is STORED
+# on the verse (`kjvRefs`, `kjvAllusions`), found by scripts/build_reference.py within the chapters a
+# quoting chapter draws on, so the rule is a lookup: 2 Nephi 12:1 to Isaiah 2:1, 3 Nephi 13:9 to
+# Matthew 6:9. A quotation and an allusion are told apart on the edge, because a reader weighs them
+# differently.
+#
+# It joins on the OSIS lists, the BibleVerse's identity, not on the readable references against
+# `name`: the identity is indexed, so each verse is a lookup; `name` is not, and a key held in a
+# variable (as UNWIND gives) cannot be hash-joined, so it would scan every Bible verse per verse.
+#
+# It needs realm-bible. Without it no BibleVerse is there to bind and the relationship is simply empty.
+# The direction is Book of Mormon → Bible; a query that does not care writes `-[:CORRESPONDS_TO]-`.
+
+name: book-of-mormon/corresponds
+derives: CORRESPONDS_TO
+properties:
+  kind:
+    type: string
+    description: "What the correspondence is — `translation` (the same verse in two scriptures' English), `quotation` or `allusion` (one scripture drawing on another)."
+description: >-
+  A Book of Mormon verse CORRESPONDS_TO the King James verse it quotes (`kind: 'quotation'`) or
+  alludes to (`kind: 'allusion'`) — 2 Nephi 12:1 to Isaiah 2:1. Needs realm-bible.
+rules:
+  - derive: "(m)-[:CORRESPONDS_TO {kind: 'quotation'}]->(b)"
+    from: |
+      MATCH (m:BomVerse) WHERE m.kjvOsis IS NOT NULL
+      UNWIND m.kjvOsis AS ref
+      MATCH (b:BibleVerse {osis: ref})
+  - derive: "(m)-[:CORRESPONDS_TO {kind: 'allusion'}]->(b)"
+    from: |
+      MATCH (m:BomVerse) WHERE m.kjvAllusionOsis IS NOT NULL
+      UNWIND m.kjvAllusionOsis AS ref
+      MATCH (b:BibleVerse {osis: ref})

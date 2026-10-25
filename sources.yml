@@ -1,0 +1,33 @@
+# The Book of Mormon as searchable DOCUMENTS, beside the graph (realm spec: sources.yml,
+# `lane: documents`).
+#
+# The graph answers "which verses mention faith"; documents answer "which chapters are ABOUT faith
+# tried by hardship" — chunked, embedded, and reachable by RELEVANT_TO. One document per CHAPTER,
+# verse numbers kept so a hit can be traced to its verse. A document's uri is its chapter's
+# `documentUri`, which is how a hit finds its way back to the verses.
+#
+# Tagged `scripture` as well as `book-of-mormon`: the vocabulary's meaning-search views retrieve
+# every scripture's chapters by that one tag, so the Book of Mormon is searched beside the Bible, the
+# Quran and the Torah in one ranking.
+sources:
+  - name: book-of-mormon-text
+    lane: documents
+    from:
+      cypher: |
+        MATCH (c:BomChapter)<-[:IN]-(v:BomVerse)
+        WITH c, v ORDER BY v.verse
+        WITH c, collect({n: v.verse, text: v.text}) AS verses
+        RETURN c.documentUri AS uri, c.name AS title, verses
+    document:
+      uri: "{{ uri }}"
+      title: "{{ title }} (Book of Mormon)"
+      content: |
+        # {{ title }}
+
+        {% for v in verses %}{{ v.n }} {{ v.text }}
+        {% endfor %}
+      sourceKind: book-of-mormon
+      tags: [scripture, book-of-mormon]
+    sync:
+      trigger: on-install
+      prune: true

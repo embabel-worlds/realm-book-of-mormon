@@ -1,17 +1,23 @@
 name: realm-book-of-mormon
 description: |
-  The Book of Mormon as a graph you can query: every verse of its fifteen books, 1 Nephi to
-  Moroni, with the headings printed in the text since 1830. Read a verse or a chapter, search
-  it, see what each book holds, and find where it quotes the Bible — twenty-one chapters of
+  Every verse of the Book of Mormon, 1 Nephi to Moroni, with the King James verses it quotes.
+  Its fifteen books carry the headings printed in the text since 1830. Read a verse or a chapter,
+  search it, see what each book holds, and find where it quotes the Bible — twenty-one chapters of
   Isaiah, the Sermon on the Mount, Malachi — verse by verse.
 
-  With realm-bible installed, each quoting verse is joined to the King James verse it quotes by
+  With realm-bible, which it requires, each quoting verse is joined to the King James verse it quotes by
   CORRESPONDS_TO, so a quoted chapter reads beside its source and the differences show.
 
   A child of the scripture vocabulary: a BomVerse is a Verse, so a question asked of every
   scripture is answered here too. Keyless. Nothing to configure. Text public domain, from
   bcbooks/scriptures-json; no copyrighted chapter summaries or footnotes.
-version: 0.1.0
+version: 0.1.1
+# Its types are children of the scripture vocabulary's, which must be installed for them to load as
+# scripture. realm-bible is required too: the views that read a verse beside its King James name
+# BibleVerse, and a host refuses a view over a label no installed realm declares.
+requires:
+  scripture-vocabulary: "[0.3.0,1.0.0)"
+  realm-bible: "[0.2.0,1.0.0)"
 # Experimental: its types are children of realm-scripture-vocabulary, which is itself experimental.
 maturity: experimental
 url: https://github.com/embabel-worlds/realm-book-of-mormon

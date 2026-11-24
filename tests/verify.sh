@@ -50,7 +50,25 @@ def records(kind):
         out += [r["data"] for r in yaml.safe_load(open(f)) or [] if r.get("type") == kind]
     return out
 
-bible = kg("MATCH (b:BibleVerse) RETURN count(b) AS n")[0]["n"] > 0
+# The stored reference is written in the background after the realm reports active, so a battery that
+# starts at once reads a half-written graph. Wait until every stored verse of this realm, and of
+# realm-bible (which it requires), is there: the counts the stored files and the holy book declare.
+import time
+def wait_seeded(what, query, want):
+    deadline = time.time() + 1800
+    while True:
+        got = kg(query)[0]["n"]
+        if got == want: return
+        if time.time() > deadline:
+            raise SystemExit("  FAIL %s: %d of %d written after 30 minutes" % (what, got, want))
+        print("  wait %s: %d of %d written" % (what, got, want)); time.sleep(30)
+for label in ['BomVerse']:
+    wait_seeded(label, "MATCH (v:%s) RETURN count(v) AS n" % label, len(records(label)))
+# realm-bible is required, so it is always installed; its canon node may itself still be on its way.
+wait_seeded("the Bible's holy book", "MATCH (h:HolyBook {scripture: 'bible'}) RETURN count(h) AS n", 1)
+wait_seeded("BibleVerse", "MATCH (b:BibleVerse) RETURN count(b) AS n",
+            kg("MATCH (h:HolyBook {scripture: 'bible'}) RETURN h.verseCount AS n")[0]["n"])
+bible = True
 
 print("== L1: every view answers by name ==")
 NEEDS_BIBLE = {"BomBesideKingJames"}

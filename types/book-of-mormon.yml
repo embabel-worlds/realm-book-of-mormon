@@ -34,7 +34,7 @@
 - name: BomBook
   parents: [ScriptureBook]
   userAnchor: false
-  description: "One of the fifteen books, 1 Nephi to Moroni, with its full title and the heading printed in the text since 1830. IN the BomScripture; its chapters are IN it."
+  description: "One of the fifteen books of the Book of Mormon, 1 Nephi to Moroni, identified by `slug` (`1-nephi`), with its full title and the heading printed in the text since 1830. IN the BomScripture; its chapters are IN it."
   properties:
     slug:
       identity: true
@@ -51,7 +51,14 @@
 - name: BomChapter
   parents: [ScriptureChapter]
   userAnchor: false
-  description: "A chapter of the Book of Mormon, e.g. `2 Nephi 12`. `quotes` lists the King James chapters its verses quote, where any do. IN its book; its verses are IN it."
+  description: "One chapter of the Book of Mormon, identified by `ref` (`2-nephi.12`) and named `2 Nephi 12`. `quotes` lists the King James chapters its verses quote, where any do. IN its book; its verses are IN it."
+  examples:
+    - q: "which Book of Mormon chapters quote Isaiah"
+      cypher: |
+        MATCH (c:BomChapter)-[:IN]->(b:BomBook)
+        WHERE any(q IN c.quotes WHERE q STARTS WITH 'Isaiah ')
+        RETURN c.name AS chapter, c.quotes AS quotes
+        ORDER BY b.bookOrder, c.chapter
   properties:
     ref:
       identity: true
@@ -66,10 +73,18 @@
   parents: [Verse]
   userAnchor: false
   description: >-
-    One verse of the Book of Mormon. `text` is the scripture, in English as it was received; `original`
-    is empty. `name` is the reference, e.g. `1 Nephi 3:7`. Search with toLower(v.text) CONTAINS 'faith'.
-    `kjvRefs` names the King James verse the verse quotes (580 do: Isaiah, Matthew 5–7, Malachi 3–4);
-    `kjvAllusions` one it only alludes to. IN its BomChapter.
+    One verse of the Book of Mormon, identified by `ref` (`1-nephi.3.7`); `name` is the reference,
+    `1 Nephi 3:7`. `text` is the scripture in English, as Joseph Smith translated it; no text in
+    another language is held, so `original` is empty. `kjvRefs` names the King James verse it quotes
+    (580 do: Isaiah, Matthew 5–7, Malachi 3–4); `kjvAllusions` one it only alludes to. IN its
+    BomChapter.
+  examples:
+    - q: "show 3 Nephi 13 beside the Sermon on the Mount it quotes"
+      cypher: |
+        MATCH (:BomChapter {name: '3 Nephi 13'})<-[:IN]-(m:BomVerse)
+        OPTIONAL MATCH (m)-[r:CORRESPONDS_TO]->(k:BibleVerse)
+        RETURN m.verse AS verse, m.text AS bookOfMormon, k.name AS kingJames, k.text AS kjv, r.kind AS kind
+        ORDER BY verse
   properties:
     ref:
       identity: true
@@ -80,7 +95,7 @@
       description: "The King James verse this verse quotes, e.g. `[Isaiah 2:1]` for 2 Nephi 12:1. Absent where it quotes none."
     kjvAllusions:
       cardinality: LIST
-      description: "A King James verse this verse alludes to without quoting, found by shared words — a candidate, e.g. `[1 Corinthians 13:4]` for Moroni 7:45."
+      description: "A King James verse this verse alludes to without quoting, found by shared words — a candidate, e.g. `[1 Corinthians 13:4]` for Moroni 7:45. Absent where none."
     kjvOsis:
       cardinality: LIST
       description: "`kjvRefs` as OSIS references, e.g. `[Isa.2.1]` — realm-bible's BibleVerse identity, which CORRESPONDS_TO joins on because it is indexed and `name` is not."

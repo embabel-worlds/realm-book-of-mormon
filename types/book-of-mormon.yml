@@ -82,7 +82,7 @@
     - q: "show 3 Nephi 13 beside the Sermon on the Mount it quotes"
       cypher: |
         MATCH (:BomChapter {name: '3 Nephi 13'})<-[:IN]-(m:BomVerse)
-        OPTIONAL MATCH (m)-[r:CORRESPONDS_TO]->(k:BibleVerse)
+        OPTIONAL MATCH (m)-[r:CORRESPONDS_TO]->(k:Verse {scripture: 'bible'})
         RETURN m.verse AS verse, m.text AS bookOfMormon, k.name AS kingJames, k.text AS kjv, r.kind AS kind
         ORDER BY verse
   properties:

@@ -11,7 +11,7 @@ description: |
   A child of the scripture vocabulary: a BomVerse is a Verse, so a question asked of every
   scripture is answered here too. Keyless. Nothing to configure. Text public domain, from
   bcbooks/scriptures-json; no copyrighted chapter summaries or footnotes.
-version: 0.1.1
+version: 0.1.2
 # Its types are children of the scripture vocabulary's, which must be installed for them to load as
 # scripture. realm-bible is required too: the views that read a verse beside its King James name
 # BibleVerse, and a host refuses a view over a label no installed realm declares.
